@@ -1,6 +1,6 @@
 {
   "name": "@danielmullerch/ts-base-dev-deps",
-  "version": "0.0.7",
+  "version": "0.0.8",
   "description": "Shared devDependencies for TypeScript projects (eslint, prettier, typescript, etc.)",
   "main": "index.js",
   "repository": {
@@ -31,7 +31,8 @@
     ".vscode/settings.json",
     ".vscode/extensions.json",
     "src/index.ts",
-    ".nvmrc"
+    ".nvmrc",
+    "scripts/postinstall.mjs"
   ],
   "devDependencies": {
     "@eslint/js": "10.0.1",
