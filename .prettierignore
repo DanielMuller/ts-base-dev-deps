@@ -1,0 +1,12 @@
+node_modules/**
+dist/**
+packages/*/dist/**
+packages/*/coverage/**
+packages/*/node_modules/**
+types/*/dist/**
+types/*/coverage/**
+types/*/node_modules/**
+coverage/**/*
+examples/**/*
+lib/**/*
+pnpm-lock.yaml
