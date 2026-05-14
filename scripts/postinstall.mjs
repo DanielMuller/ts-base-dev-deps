@@ -92,15 +92,28 @@ function configureNpmSaveExact() {
 async function copyConfigFile(filename, subdir = '', overwrite = false) {
   const target = path.resolve(consumerRoot, subdir, filename);
   const source = path.resolve(packageRoot, subdir, filename);
+  const fallbackSource = filename === '.gitignore' ? path.resolve(packageRoot, subdir, '.npmignore') : null;
   try {
     await fs.mkdir(path.dirname(target), { recursive: true });
+    let sourceToCopy = source;
+    try {
+      await fs.access(sourceToCopy);
+    } catch {
+      if (fallbackSource) {
+        await fs.access(fallbackSource);
+        sourceToCopy = fallbackSource;
+      } else {
+        throw new Error(`Source file not found: ${sourceToCopy}`);
+      }
+    }
+
     if (overwrite) {
-      await fs.copyFile(source, target);
+      await fs.copyFile(sourceToCopy, target);
       logger.log(`${subdir ? subdir + '/' : ''}${filename} refreshed in consumer project`);
       return;
     }
 
-    await fs.copyFile(source, target, fs.constants.COPYFILE_EXCL);
+    await fs.copyFile(sourceToCopy, target, fs.constants.COPYFILE_EXCL);
     logger.log(`${subdir ? subdir + '/' : ''}${filename} copied to consumer project`);
   } catch (err) {
     if (err.code === 'EEXIST') {
