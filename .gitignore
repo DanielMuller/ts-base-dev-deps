@@ -14,9 +14,7 @@ tsconfig.tsbuildinfo
 # IDE configurations
 vscode/
 idea/
-# Lockfiles from other package managers
-package-lock.json
-yarn.lock
+
 # pnpm store directory (if local)
 store
 # Test and cache directories

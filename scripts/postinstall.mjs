@@ -181,5 +181,16 @@ export async function postinstall() {
 }
 
 if (process.env.npm_lifecycle_event === 'postinstall') {
-  postinstall();
+  // Skip postinstall in the source package's own repository
+  (async () => {
+    const packageJsonPath = path.resolve(process.cwd(), 'package.json');
+    const packageJsonContent = await fs.readFile(packageJsonPath, 'utf8');
+    const packageJson = JSON.parse(packageJsonContent);
+
+    if (packageJson.name === '@danielmuller/ts-base-dev-deps') {
+      logger.log('Skipping postinstall in source package repository.');
+    } else {
+      await postinstall();
+    }
+  })();
 }
