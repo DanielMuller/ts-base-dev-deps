@@ -43,8 +43,6 @@ jobs:
                   }
 
                   PACKAGE_NAME=$(node -p "require('./package.json').name")
-                  PACKAGE_BASENAME="${PACKAGE_NAME#*/}"
-                  NPMJS_PACKAGE_NAME="@danielmullerch/${PACKAGE_BASENAME}"
                   CURRENT_VERSION=$(node -p "require('./package.json').version")
                   BEFORE_SHA="${{ github.event.before }}"
 
@@ -64,45 +62,27 @@ jobs:
                   fi
 
                   GITHUB_PUBLISHED_VERSION=$(npm view "$PACKAGE_NAME" version --registry https://npm.pkg.github.com 2>/dev/null || echo "0.0.0")
-                  NPM_PUBLISHED_VERSION=$(npm view "$NPMJS_PACKAGE_NAME" version --registry https://registry.npmjs.org 2>/dev/null || echo "0.0.0")
 
                   NEWER_THAN_GITHUB="false"
                   if version_gt "$CURRENT_VERSION" "$GITHUB_PUBLISHED_VERSION"; then
                     NEWER_THAN_GITHUB="true"
                   fi
 
-                  NEWER_THAN_NPM="false"
-                  if version_gt "$CURRENT_VERSION" "$NPM_PUBLISHED_VERSION"; then
-                    NEWER_THAN_NPM="true"
-                  fi
-
                   SHOULD_PUBLISH_GITHUB="false"
-                  SHOULD_PUBLISH_NPM="false"
 
                   if [[ "$VERSION_CHANGED" == "true" && "$VERSION_BUMPED" == "true" && "$NEWER_THAN_GITHUB" == "true" ]]; then
                     SHOULD_PUBLISH_GITHUB="true"
                   fi
 
-                  if [[ "$VERSION_CHANGED" == "true" && "$VERSION_BUMPED" == "true" && "$NEWER_THAN_NPM" == "true" ]]; then
-                    SHOULD_PUBLISH_NPM="true"
-                  fi
-
-                  SHOULD_INSTALL="false"
-                  if [[ "$SHOULD_PUBLISH_GITHUB" == "true" || "$SHOULD_PUBLISH_NPM" == "true" ]]; then
-                    SHOULD_INSTALL="true"
-                  fi
+                  SHOULD_INSTALL="$SHOULD_PUBLISH_GITHUB"
 
                   echo "package_name=$PACKAGE_NAME" >> "$GITHUB_OUTPUT"
-                  echo "npmjs_package_name=$NPMJS_PACKAGE_NAME" >> "$GITHUB_OUTPUT"
                   echo "current_version=$CURRENT_VERSION" >> "$GITHUB_OUTPUT"
                   echo "github_published_version=$GITHUB_PUBLISHED_VERSION" >> "$GITHUB_OUTPUT"
-                  echo "npm_published_version=$NPM_PUBLISHED_VERSION" >> "$GITHUB_OUTPUT"
                   echo "version_changed=$VERSION_CHANGED" >> "$GITHUB_OUTPUT"
                   echo "version_bumped=$VERSION_BUMPED" >> "$GITHUB_OUTPUT"
                   echo "newer_than_github=$NEWER_THAN_GITHUB" >> "$GITHUB_OUTPUT"
-                  echo "newer_than_npm=$NEWER_THAN_NPM" >> "$GITHUB_OUTPUT"
                   echo "should_publish_github=$SHOULD_PUBLISH_GITHUB" >> "$GITHUB_OUTPUT"
-                  echo "should_publish_npm=$SHOULD_PUBLISH_NPM" >> "$GITHUB_OUTPUT"
                   echo "should_install=$SHOULD_INSTALL" >> "$GITHUB_OUTPUT"
 
             - name: Install dependencies
@@ -115,34 +95,12 @@ jobs:
               env:
                   NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-            - name: Ensure NPM token for npmjs publish
-              if: steps.gate.outputs.should_publish_npm == 'true'
-              shell: bash
-              run: |
-                  if [[ -z "${{ secrets.NPM_TOKEN }}" ]]; then
-                    echo "NPM_TOKEN secret is required to publish to npmjs registry."
-                    exit 1
-                  fi
-
-            - name: Publish to npmjs
-              if: steps.gate.outputs.should_publish_npm == 'true'
-              shell: bash
-              run: |
-                  npm pkg set name="${{ steps.gate.outputs.npmjs_package_name }}"
-                  npm publish --access public --registry https://registry.npmjs.org
-              env:
-                  NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-
             - name: Publish decision summary
               run: |
                   echo "package: ${{ steps.gate.outputs.package_name }}"
-                  echo "npmjs_package: ${{ steps.gate.outputs.npmjs_package_name }}"
                   echo "current_version: ${{ steps.gate.outputs.current_version }}"
                   echo "github_published_version: ${{ steps.gate.outputs.github_published_version }}"
-                  echo "npm_published_version: ${{ steps.gate.outputs.npm_published_version }}"
                   echo "version_changed_in_push: ${{ steps.gate.outputs.version_changed }}"
                   echo "version_bumped_in_push: ${{ steps.gate.outputs.version_bumped }}"
                   echo "newer_than_github: ${{ steps.gate.outputs.newer_than_github }}"
-                  echo "newer_than_npm: ${{ steps.gate.outputs.newer_than_npm }}"
                   echo "should_publish_github: ${{ steps.gate.outputs.should_publish_github }}"
-                  echo "should_publish_npm: ${{ steps.gate.outputs.should_publish_npm }}"
