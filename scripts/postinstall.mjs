@@ -1,3 +1,63 @@
+function detectPackageManager() {
+  const userAgent = process.env.npm_config_user_agent || '';
+  if (userAgent.startsWith('yarn')) return 'yarn';
+  if (userAgent.startsWith('pnpm')) return 'pnpm';
+  if (userAgent.startsWith('bun')) return 'bun';
+  return 'npm';
+}
+async function ensureDevDependenciesInstalled() {
+  // Read devDependencies from the shared package
+  const sharedPkgRaw = await fs.readFile(path.resolve(packageRoot, 'package.json'), 'utf8');
+  const sharedPkg = JSON.parse(sharedPkgRaw);
+  const sharedDevDeps = sharedPkg.devDependencies || {};
+
+  // Read consumer's package.json
+  const consumerPkgPath = path.resolve(consumerRoot, 'package.json');
+  let consumerPkgRaw, consumerPkg;
+  try {
+    consumerPkgRaw = await fs.readFile(consumerPkgPath, 'utf8');
+    consumerPkg = JSON.parse(consumerPkgRaw);
+  } catch (err) {
+    logger.error('Could not read consumer package.json:', err);
+    return;
+  }
+  const consumerDeps = { ...consumerPkg.dependencies, ...consumerPkg.devDependencies };
+
+  // Find missing devDependencies
+  const missing = Object.entries(sharedDevDeps)
+    .filter(([dep]) => !consumerDeps[dep])
+    .map(([dep, version]) => `${dep}@${version}`);
+
+  if (missing.length === 0) {
+    logger.log('All devDependencies already installed in consumer project.');
+    return;
+  }
+
+  const pm = detectPackageManager();
+  logger.log(`Detected package manager: ${pm}`);
+  logger.log('Installing missing devDependencies in consumer project:', missing.join(' '));
+  let cmd, args;
+  if (pm === 'yarn') {
+    cmd = 'yarn';
+    args = ['add', '--dev', '--exact', ...missing];
+  } else if (pm === 'pnpm') {
+    cmd = 'pnpm';
+    args = ['add', '--save-dev', '-E', '-w', ...missing];
+  } else if (pm === 'bun') {
+    cmd = 'bun';
+    args = ['add', '--dev', '--exact', ...missing];
+  } else {
+    cmd = 'npm';
+    args = ['install', '--save-dev', '--save-exact', ...missing];
+  }
+  const result = spawnSync(cmd, args, {
+    cwd: consumerRoot,
+    stdio: 'inherit',
+  });
+  if (result.error || result.status !== 0) {
+    logger.error(`Failed to install devDependencies in consumer project using ${pm}.`);
+  }
+}
 import { promises as fs } from 'fs';
 import { spawnSync } from 'child_process';
 import path from 'path';
@@ -182,6 +242,7 @@ export async function postinstall() {
   await copyConfigFile('index.ts', 'src');
   await ensureLintStagedConfig();
   await configureGitHooksPath();
+  await ensureDevDependenciesInstalled();
 }
 
 if (process.env.npm_lifecycle_event === 'postinstall') {

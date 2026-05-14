@@ -23,14 +23,11 @@ jobs:
               uses: actions/setup-node@v5
               with:
                   node-version: 24
-                  registry-url: https://npm.pkg.github.com
-                  scope: "@danielmuller"
+                  registry-url: https://registry.npmjs.org
 
             - name: Determine publish eligibility
               id: gate
               shell: bash
-              env:
-                  NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
               run: |
                   set -euo pipefail
 
@@ -65,46 +62,46 @@ jobs:
                     fi
                   fi
 
-                  GITHUB_PUBLISHED_VERSION=$(npm view "$PACKAGE_NAME" version --registry https://npm.pkg.github.com 2>/dev/null || echo "0.0.0")
+                  NPM_PUBLISHED_VERSION=$(npm view "$PACKAGE_NAME" version --registry https://registry.npmjs.org 2>/dev/null || echo "0.0.0")
 
-                  NEWER_THAN_GITHUB="false"
-                  if version_gt "$CURRENT_VERSION" "$GITHUB_PUBLISHED_VERSION"; then
-                    NEWER_THAN_GITHUB="true"
+                  NEWER_THAN_NPM="false"
+                  if version_gt "$CURRENT_VERSION" "$NPM_PUBLISHED_VERSION"; then
+                    NEWER_THAN_NPM="true"
                   fi
 
-                  SHOULD_PUBLISH_GITHUB="false"
+                  SHOULD_PUBLISH_NPM="false"
 
-                  if [[ "$VERSION_CHANGED" == "true" && "$VERSION_BUMPED" == "true" && "$NEWER_THAN_GITHUB" == "true" ]]; then
-                    SHOULD_PUBLISH_GITHUB="true"
+                  if [[ "$VERSION_CHANGED" == "true" && "$VERSION_BUMPED" == "true" && "$NEWER_THAN_NPM" == "true" ]]; then
+                    SHOULD_PUBLISH_NPM="true"
                   fi
 
-                  SHOULD_INSTALL="$SHOULD_PUBLISH_GITHUB"
+                  SHOULD_INSTALL="$SHOULD_PUBLISH_NPM"
 
                   echo "package_name=$PACKAGE_NAME" >> "$GITHUB_OUTPUT"
                   echo "current_version=$CURRENT_VERSION" >> "$GITHUB_OUTPUT"
-                  echo "github_published_version=$GITHUB_PUBLISHED_VERSION" >> "$GITHUB_OUTPUT"
+                  echo "npm_published_version=$NPM_PUBLISHED_VERSION" >> "$GITHUB_OUTPUT"
                   echo "version_changed=$VERSION_CHANGED" >> "$GITHUB_OUTPUT"
                   echo "version_bumped=$VERSION_BUMPED" >> "$GITHUB_OUTPUT"
-                  echo "newer_than_github=$NEWER_THAN_GITHUB" >> "$GITHUB_OUTPUT"
-                  echo "should_publish_github=$SHOULD_PUBLISH_GITHUB" >> "$GITHUB_OUTPUT"
+                  echo "newer_than_npm=$NEWER_THAN_NPM" >> "$GITHUB_OUTPUT"
+                  echo "should_publish_npm=$SHOULD_PUBLISH_NPM" >> "$GITHUB_OUTPUT"
                   echo "should_install=$SHOULD_INSTALL" >> "$GITHUB_OUTPUT"
 
             - name: Install dependencies
               if: steps.gate.outputs.should_install == 'true'
               run: npm ci --ignore-scripts
 
-            - name: Publish to GitHub Packages
-              if: steps.gate.outputs.should_publish_github == 'true'
-              run: npm publish --registry https://npm.pkg.github.com
+            - name: Publish to npmjs
+              if: steps.gate.outputs.should_publish_npm == 'true'
+              run: npm publish --access public --registry https://registry.npmjs.org
               env:
-                  NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+                  NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
             - name: Publish decision summary
               run: |
                   echo "package: ${{ steps.gate.outputs.package_name }}"
                   echo "current_version: ${{ steps.gate.outputs.current_version }}"
-                  echo "github_published_version: ${{ steps.gate.outputs.github_published_version }}"
+                  echo "npm_published_version: ${{ steps.gate.outputs.npm_published_version }}"
                   echo "version_changed_in_push: ${{ steps.gate.outputs.version_changed }}"
                   echo "version_bumped_in_push: ${{ steps.gate.outputs.version_bumped }}"
-                  echo "newer_than_github: ${{ steps.gate.outputs.newer_than_github }}"
-                  echo "should_publish_github: ${{ steps.gate.outputs.should_publish_github }}"
+                  echo "newer_than_npm: ${{ steps.gate.outputs.newer_than_npm }}"
+                  echo "should_publish_npm: ${{ steps.gate.outputs.should_publish_npm }}"
