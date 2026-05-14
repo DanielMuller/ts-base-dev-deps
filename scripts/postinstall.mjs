@@ -1,10 +1,14 @@
 import { promises as fs } from 'fs';
 import { spawnSync } from 'child_process';
 import path from 'path';
+import { fileURLToPath } from 'url';
 
 const logger = console;
 const legacyEslintLintStagedCommand = 'eslint --fix';
 const requiredEslintLintStagedCommand = 'eslint --fix --config eslint.config.mjs';
+const scriptDir = path.dirname(fileURLToPath(import.meta.url));
+const packageRoot = path.resolve(scriptDir, '..');
+const consumerRoot = path.resolve(process.env.INIT_CWD || process.cwd());
 
 const requiredLintStagedConfig = {
   '*.{js,mjs,cjs,ts,tsx,json,css,scss,md,yml,yaml}': ['prettier --write'],
@@ -12,8 +16,8 @@ const requiredLintStagedConfig = {
 };
 
 async function copyConfigFile(filename, subdir = '', overwrite = false) {
-  const target = path.resolve(process.cwd(), subdir, filename);
-  const source = path.resolve(import.meta.dirname || path.dirname(import.meta.url.replace(/^file:\/\//, '')), subdir, filename);
+  const target = path.resolve(consumerRoot, subdir, filename);
+  const source = path.resolve(packageRoot, subdir, filename);
   try {
     await fs.mkdir(path.dirname(target), { recursive: true });
     if (overwrite) {
@@ -35,7 +39,7 @@ async function copyConfigFile(filename, subdir = '', overwrite = false) {
 
 async function configureGitHooksPath() {
   const gitCheck = spawnSync('git', ['rev-parse', '--is-inside-work-tree'], {
-    cwd: process.cwd(),
+    cwd: consumerRoot,
     stdio: 'ignore',
   });
 
@@ -45,7 +49,7 @@ async function configureGitHooksPath() {
   }
 
   const hookPathResult = spawnSync('git', ['config', 'core.hooksPath', '.husky'], {
-    cwd: process.cwd(),
+    cwd: consumerRoot,
     stdio: 'ignore',
   });
 
@@ -58,7 +62,7 @@ async function configureGitHooksPath() {
 }
 
 async function ensureLintStagedConfig() {
-  const packageJsonPath = path.resolve(process.cwd(), 'package.json');
+  const packageJsonPath = path.resolve(consumerRoot, 'package.json');
 
   let packageJsonRaw;
   try {
@@ -181,16 +185,16 @@ export async function postinstall() {
 }
 
 if (process.env.npm_lifecycle_event === 'postinstall') {
-  // Skip postinstall in the source package's own repository
   (async () => {
-    const packageJsonPath = path.resolve(process.cwd(), 'package.json');
-    const packageJsonContent = await fs.readFile(packageJsonPath, 'utf8');
-    const packageJson = JSON.parse(packageJsonContent);
-
-    if (packageJson.name === '@danielmuller/ts-base-dev-deps') {
-      logger.log('Skipping postinstall in source package repository.');
-    } else {
+    try {
+      if (consumerRoot === packageRoot) {
+        logger.log('Skipping postinstall in source package repository.');
+        return;
+      }
       await postinstall();
+    } catch (err) {
+      logger.error('postinstall failed:', err);
+      process.exitCode = 1;
     }
   })();
 }
