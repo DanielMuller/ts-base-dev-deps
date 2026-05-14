@@ -75,6 +75,20 @@ const requiredLintStagedConfig = {
   '*.{js,mjs,cjs,ts,tsx}': [requiredEslintLintStagedCommand],
 };
 
+function configureNpmSaveExact() {
+  const result = spawnSync('npm', ['config', 'set', '--location=project', 'save-exact=true'], {
+    cwd: consumerRoot,
+    stdio: 'ignore',
+  });
+
+  if (result.error || result.status !== 0) {
+    logger.log('Skipping npm save-exact project config because npm config could not be set.');
+    return;
+  }
+
+  logger.log('Configured npm project setting: save-exact=true');
+}
+
 async function copyConfigFile(filename, subdir = '', overwrite = false) {
   const target = path.resolve(consumerRoot, subdir, filename);
   const source = path.resolve(packageRoot, subdir, filename);
@@ -226,6 +240,7 @@ async function ensureLintStagedConfig() {
 }
 
 export async function postinstall() {
+  configureNpmSaveExact();
   await copyConfigFile('tsconfig.json');
   await copyConfigFile('tsconfig.test.json');
   await copyConfigFile('tsconfig.shared.json', '', true);
@@ -240,6 +255,7 @@ export async function postinstall() {
   await copyConfigFile('settings.json', '.vscode');
   await copyConfigFile('extensions.json', '.vscode');
   await copyConfigFile('index.ts', 'src');
+  await copyConfigFile('.nvmrc');
   await ensureLintStagedConfig();
   await configureGitHooksPath();
   await ensureDevDependenciesInstalled();

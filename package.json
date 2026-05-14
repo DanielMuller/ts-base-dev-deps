@@ -1,6 +1,6 @@
 {
   "name": "@danielmullerch/ts-base-dev-deps",
-  "version": "0.0.6",
+  "version": "0.0.7",
   "description": "Shared devDependencies for TypeScript projects (eslint, prettier, typescript, etc.)",
   "main": "index.js",
   "repository": {
@@ -16,6 +16,23 @@
   },
   "license": "MIT",
   "private": false,
+  "files": [
+    "tsconfig.json",
+    "tsconfig.test.json",
+    "tsconfig.shared.json",
+    "tsconfig.test.shared.json",
+    "eslint.config.mjs",
+    "eslint.shared.mjs",
+    "prettier.config.mjs",
+    "prettier.shared.mjs",
+    ".prettierignore",
+    ".gitignore",
+    ".husky/pre-commit",
+    ".vscode/settings.json",
+    ".vscode/extensions.json",
+    "src/index.ts",
+    ".nvmrc"
+  ],
   "devDependencies": {
     "@eslint/js": "10.0.1",
     "@jest/globals": "30.4.1",
