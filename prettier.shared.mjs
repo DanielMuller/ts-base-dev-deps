@@ -10,8 +10,8 @@ export default {
   bracketSpacing: true,
   arrowParens: 'always',
   importOrder: [
-    '^@jest/(.*)$',
     '<BUILTIN_MODULES>',
+    '^@jest/(.*)$',
     '^constructs$',
     '^aws-cdk-lib$',
     '^aws-cdk-lib/(.*)$',
