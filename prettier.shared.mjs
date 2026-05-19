@@ -9,6 +9,23 @@ export default {
   htmlWhitespaceSensitivity: 'ignore',
   bracketSpacing: true,
   arrowParens: 'always',
+  importOrder: [
+    '^@jest/(.*)$',
+    '<BUILTIN_MODULES>',
+    '^constructs$',
+    '^aws-cdk-lib$',
+    '^aws-cdk-lib/(.*)$',
+    '^@ac-it-development/(.*)$',
+    '<THIRD_PARTY_MODULES>',
+    '^@@helpers/(.*)$',
+    '^[./]',
+    '<TS_TYPES>',
+    '<THIRD_PARTY_TS_TYPES>',
+  ],
+  importOrderSeparation: true,
+  importOrderSortSpecifiers: true,
+  importOrderGroupNamespaceSpecifiers: true,
+  importOrderCaseInsensitive: true,
   overrides: [
     {
       files: '*.yml',
@@ -19,4 +36,5 @@ export default {
       },
     },
   ],
+  plugins: ['@trivago/prettier-plugin-sort-imports'],
 };
