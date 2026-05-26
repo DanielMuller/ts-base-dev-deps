@@ -23,7 +23,7 @@ Existing local edits are preserved for the main file, while shared support files
 1. Add the package to your project as a dev dependency:
 
 ```bash
-npm install --save-dev @danielmuller/ts-base-dev-deps
+npm install --save-dev @danielmullerch/ts-base-dev-deps
 ```
 
 2. Let the install hook copy the default ESLint and Prettier starter files, add the Husky pre-commit hook, update `lint-staged` in `package.json`, and refresh the shared config files in the repository.
