@@ -10,6 +10,7 @@ jobs:
     publish:
         runs-on: ubuntu-latest
         permissions:
+            id-token: write
             contents: read
             packages: write
 
@@ -93,8 +94,6 @@ jobs:
             - name: Publish to npmjs
               if: steps.gate.outputs.should_publish_npm == 'true'
               run: npm publish --access public --registry https://registry.npmjs.org
-              env:
-                  NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
             - name: Publish decision summary
               run: |
