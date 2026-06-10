@@ -1,6 +1,6 @@
 {
   "name": "@danielmullerch/ts-base-dev-deps",
-  "version": "0.0.13",
+  "version": "0.0.14",
   "description": "Shared devDependencies for TypeScript projects (eslint, prettier, typescript, etc.)",
   "main": "index.js",
   "repository": {
