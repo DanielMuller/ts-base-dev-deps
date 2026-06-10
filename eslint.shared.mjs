@@ -1,7 +1,8 @@
 import js from '@eslint/js';
 import ts from '@typescript-eslint/eslint-plugin';
-import eslintConfigPrettier from 'eslint-config-prettier';
 import tsParser from '@typescript-eslint/parser';
+import eslintConfigPrettier from 'eslint-config-prettier';
+import unicorn from 'eslint-plugin-unicorn';
 import globals from 'globals';
 
 export default [
@@ -89,6 +90,23 @@ export default [
         },
       ],
       '@typescript-eslint/no-unused-vars': ['error', { args: 'none' }],
+    },
+  },
+  {
+    files: ['**/*.js', '**/*.mjs', '**/*.cjs', '**/*.ts', '**/*.tsx'],
+    plugins: {
+      unicorn,
+    },
+    rules: {
+      'unicorn/filename-case': [
+        'error',
+        {
+          cases: { camelCase: true },
+          ignore: [
+            /^__.*__$/, // Jest __tests__, __mocks__, etc.
+          ],
+        },
+      ],
     },
   },
   {
